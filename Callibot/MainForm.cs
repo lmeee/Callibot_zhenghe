@@ -579,7 +579,7 @@ namespace Callibot
                 last_angle = robot.ByteToAngle(last_position);
                 for (int j = 0; j < 6; j++)
                 {
-                    RPM[j] = Math.Abs(last_angle[j] - angle[j]) * 0.1; //改变initial的角速度，原来为240/360.
+                    RPM[j] = Math.Abs(last_angle[j] - angle[j]) * 0.3; //改变initial的角速度，原来为240/360.
                     if (RPM[j] == 0)
                         RPM[j] = RPM[j] + 1;
                 }
