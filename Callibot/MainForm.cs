@@ -368,6 +368,14 @@ namespace Callibot
             {
                 last_position[i] = BitConverter.GetBytes(Convert.ToInt32(sr.ReadLine()))[0];
             }
+            //initial with a higher position
+            //byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x00, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 }; //initial position  with a higher position
+            byte[] high_last_position = last_position;
+            high_last_position[4] = 0x7B;
+            high_last_position[5] = 0x06;
+            Initial_Position(high_last_position);
+            Thread.Sleep(100);
+
             Initial_Position(last_position);
             sr.Close();
             Thread.Sleep(1000);
@@ -623,8 +631,10 @@ namespace Callibot
         private void Initial_Click(object sender, EventArgs e)
         {
             byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
+            //byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x00, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
+
             //DataCut wash = new DataCut("rotate.txt");
-            //byte[] position = wash.FindOptimalZ(20);
+            //position = wash.FindOptimalZ(18);
             Initial_Position(position);
         }
 
@@ -1210,7 +1220,7 @@ namespace Callibot
 
         private void button1_Click_1(object sender, EventArgs e)
         {
-            byte[] command;
+            //byte[] command;
             byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
             //for (int i = 0; i < 3; i++)
             {
@@ -1345,6 +1355,9 @@ namespace Callibot
         private void Liuchenghuajiaoxue_Click(object sender, EventArgs e)
         {
             //流程化教学和teach按键只能分别使用，不能一次按流程化教学一次按teach
+            byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
+
+            
             if (teachingSwitch)
             {
 
@@ -1380,11 +1393,16 @@ namespace Callibot
                 {
                     byte[] command = StepMoter_Move(0x01, horizontalInterval, 1000);
                     sp1.Write(command, 0, command.Length);
+                    Thread.Sleep(1500);
+                    Initial_Position(position);
+
                 }
                 else
                 {
                     byte[] command = StepMoter_Move(0x01, -horizontalInterval * 2, 1000);
                     sp1.Write(command, 0, command.Length);
+                    Thread.Sleep(1500); 
+                    Initial_Position(position);
                 }
 
                 Thread.Sleep(100);
@@ -1417,7 +1435,8 @@ namespace Callibot
             int filename = int.Parse(srr.ReadLine());
             srr.Close();
 
-            //Play_Text();  //沾笔
+            Initial_Position(Initpos);
+            Play_Text("zb.txt", 1.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
             sp.DiscardInBuffer();
@@ -1427,7 +1446,7 @@ namespace Callibot
             Thread.Sleep(300);
             filename++;
 
-            //沾笔
+            Play_Text("zb.txt", 1.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
             command = StepMoter_Move(0x01, 1480, 2000);
@@ -1444,7 +1463,7 @@ namespace Callibot
             command = StepMoter_Move(0x01, -1480, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
-            //沾笔
+            Play_Text("zb.txt", 1.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
 
@@ -1461,6 +1480,8 @@ namespace Callibot
             command = StepMoter_Move(0x01, -2960, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
+            Play_Text("piekai.txt", 1.0);
+            Thread.Sleep(300);
 
             sww = File.CreateText("readcount.txt");
             sww.WriteLine(filename.ToString());

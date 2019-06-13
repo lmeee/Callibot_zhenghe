@@ -11,7 +11,7 @@ namespace Callibot
 {
     //error的处理,txt的格式问题
     class DataCut
-    {//v2.0 
+    {//v4.0 
      //input txt file should not contain error data. incorrect Format and lack of enough data was also not allow.
      // This file was used for data washing. Using these functions, we could eliminate uneccesary data, which was good for modeling.
      // For writing, one should start from a high place and end at a high place.
@@ -21,11 +21,12 @@ namespace Callibot
         static string filename;
         string[,] storage;
         StreamWriter wfile = File.CreateText("litest.txt");
-        StreamWriter washed; 
+        StreamWriter washed;
         //FileStream rfile = new FileStream("zhi1.txt", FileMode.OpenOrCreate, FileAccess.Read);
         StreamReader read;
         double[] zList;
-        double opimalz = -70;//found by function FindOptimalZ
+        double opimalz = -68;//found by function FindOptimalZ
+        public int ErrorStringExist = 0;
 
 
         public DataCut(string FileName)
@@ -38,7 +39,7 @@ namespace Callibot
             int count = 0;
             int Row_num = 0;
             string temp;
-            read = File.OpenText(filename+".txt");
+            read = File.OpenText(filename + ".txt");
             while (true)
             {
                 temp = read.ReadLine();
@@ -48,10 +49,10 @@ namespace Callibot
             }
             read.Close();
 
-            storage = new string[count,12];
+            storage = new string[count, 12];
             zList = new double[count];
 
-            read = File.OpenText(filename+".txt");
+            read = File.OpenText(filename + ".txt");
             count = -1;
             int col = 0;
             Boolean indicator = true;
@@ -63,9 +64,11 @@ namespace Callibot
                     count++;
                     col = 0;
                     indicator = true;
-                }else if (temp.Contains("error")|| (!indicator))
+                }
+                else if (temp.Contains("error") || (!indicator))
                 {
                     col++;
+                    ErrorStringExist++;
                     continue;
                 }
                 else
@@ -81,8 +84,8 @@ namespace Callibot
                         col++;
                     }
                 }
-                    
-                
+
+
             }
             read.Close();
         }
@@ -110,12 +113,12 @@ namespace Callibot
                 //wfile.WriteLine(z.ToString());
                 zList[i] = z;
             }
-            wfile.Close();   
+            wfile.Close();
         }
 
         public byte[] FindOptimalZ(double d)
-         //using initial position to tried to find the optimal z-aix value of ground.
-         //d is the distance of placing down the pen from the original initial position.
+        //using initial position to tried to find the optimal z-aix value of ground.
+        //d is the distance of placing down the pen from the original initial position.
         {
             byte[] iniposition = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
             Matrix<double> TransformMatrix = r.ForwardKinematics(iniposition);
@@ -148,10 +151,10 @@ namespace Callibot
             double[] neworipos = new double[3];
             neworipos[0] = oripos[0];
             neworipos[1] = oripos[1];
-            neworipos[2] = oripos[2]-d;
+            neworipos[2] = oripos[2] - d;
             byte[] newPosition = new byte[12];
             r.InverseKinematics(neworipos, ore1, ore2, ref newPosition);
-            for (int i = 0; i<3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 wfile.WriteLine(Convert.ToString(neworipos[i]));
             }
@@ -161,7 +164,7 @@ namespace Callibot
 
         public void DataWash()
         {
-            StreamWriter washed = File.CreateText(filename + "Washed.txt");
+            StreamWriter washed = File.CreateText("wash\\"+filename + ".txt");
             int StartIndex = 0;
             int EndIndex = zList.Length;
             for (int i = 0; i < zList.Length; i++)
@@ -172,18 +175,20 @@ namespace Callibot
                     break;
                 }
             }
-            for (int i = zList.Length-1; i>=0; i--)
+            for (int i = zList.Length - 1; i >= 0; i--)
             {
                 if (zList[i] <= opimalz)
                 {
 
                     EndIndex = i;
+                    //change to avoid the brush touching the paper at the last frame
+                    if (EndIndex < zList.Length - 1) EndIndex++;
                     break;
                 }
             }
-            for  (int i = StartIndex; i<=EndIndex; i++)
+            for (int i = StartIndex; i <= EndIndex; i++)
             {
-                washed.WriteLine("Frame "+Convert.ToString(i));
+                washed.WriteLine("Frame " + Convert.ToString(i));
                 for (int j = 0; j < 12; j++)
                 {
                     washed.WriteLine(storage[i, j]);
@@ -194,13 +199,13 @@ namespace Callibot
 
         public void ErrorCorrect()
         {
-            StreamWriter cofile = File.CreateText(filename+"Correct.txt");
+            StreamWriter cofile = File.CreateText("correct\\"+filename + ".txt");
             Boolean indicator = true;
             for (int i = 0; i < zList.Length; i++)
             {
-                for (int j = 11; j>=0; j--)
+                for (int j = 11; j >= 0; j--)
                 {
-                    if(storage[i, j] == null) { indicator = false; break; }
+                    if (storage[i, j] == null) { indicator = false; break; }
                     else { indicator = true; }
                 }
                 if (indicator)
@@ -216,17 +221,107 @@ namespace Callibot
             cofile.Close();
         }
 
+        public Boolean CheckFile()
+        {
+            double[,] FrameStorage = new double[2, 6];
+            //read = File.OpenText(filename + "Correct.txt");
+            byte[] buffer = new byte[12];
+            double[] tempangle = new double[6];
+            read = File.OpenText(filename + ".txt");
+            read.ReadLine();
+            int FrameNum = 1;
+            int Largetimes = 0;
+            bool isFirstRun = true;
+            for (int i = 0; i < 12; i++)
+            {
+                buffer[i] = BitConverter.GetBytes(Convert.ToInt32(read.ReadLine()))[0];
+            }
+            tempangle = r.ByteToAngle(buffer);
+            for (int i = 0; i < 6; i++)
+            {
+                FrameStorage[0, i] = tempangle[i];
+            }
+
+
+            while (true)
+            {
+                FrameNum++;
+                if (read.Peek() == -1) { break; }
+                if (isFirstRun)
+                {
+                    read.ReadLine();
+                    for (int i = 0; i < 12; i++)
+                    {
+                        buffer[i] = BitConverter.GetBytes(Convert.ToInt32(read.ReadLine()))[0];
+                    }
+                    isFirstRun = false;
+                    tempangle = r.ByteToAngle(buffer);
+                    for (int i = 0; i < 6; i++)
+                    {
+                        FrameStorage[1, i] = tempangle[i];
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < 6; i++)
+                    {
+                        FrameStorage[0, i] = FrameStorage[1, i];
+                    }
+                    read.ReadLine();
+                    for (int i = 0; i < 12; i++)
+                    {
+                        buffer[i] = BitConverter.GetBytes(Convert.ToInt32(read.ReadLine()))[0];
+                    }
+                    tempangle = r.ByteToAngle(buffer);
+                    for (int i = 0; i < 6; i++)
+                    {
+                        FrameStorage[1, i] = tempangle[i];
+                    }
+
+                }
+                for (int i = 0; i < 6; i++)
+                {// 计算多个frame的差距可能会好一些
+                    if (Math.Abs(FrameStorage[0, i] - FrameStorage[1, i]) > 10)
+                    {
+                        Largetimes++;
+                    }
+                }
+                if (Largetimes > 3)
+                {
+                    wfile.WriteLine("error in data correction");
+                    wfile.Close();
+                    return false;
+                }
+                else
+                {
+                    Largetimes = 0;
+                }
+            }
+            return true;
+
+        }
+
+
+
         public void Washmode()
         {
             ReadFile();
             CreateZAxisText();
             DataWash();
         }
-        public void Correctmode()
+        public void MainFun()
         {
             ReadFile();
             CreateZAxisText();
             ErrorCorrect();
+            DataCut wash = new DataCut(filename + "Correct");
+            CheckFile();
+            wash.Washmode();
+            FileInfo ft = new FileInfo("t.txt");
+            FileInfo ftc = new FileInfo("tCorrect.txt");
+            FileInfo ftcw = new FileInfo("tCorrectWashed.txt");
+            //ft.MoveTo("\\data\\")
+
         }
     }
 }

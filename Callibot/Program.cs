@@ -14,9 +14,20 @@ namespace Callibot
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
-            //DataCut wash = new DataCut("t");
-            //wash.Correctmode();
-            //int i = 1;
+
+            //int j = 0;
+            //for (int i = 220; i <= 260; i++)
+            //{
+            //    DataCut wash = new DataCut(Convert.ToString(i));
+            //    wash.Washmode();
+            //    //wash.ErrorCorrect();
+            //    if (wash.ErrorStringExist != 0)
+            //    {
+            //        j++;
+            //    }
+            //}
+
+
         }
     }
 }
