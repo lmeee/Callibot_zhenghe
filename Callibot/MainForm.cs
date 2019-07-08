@@ -368,13 +368,169 @@ namespace Callibot
             {
                 last_position[i] = BitConverter.GetBytes(Convert.ToInt32(sr.ReadLine()))[0];
             }
+
+            Initial_Position(last_position);
+            sr.Close();
+            Thread.Sleep(1000);
+            sr = File.OpenText(text_name);
+
+
+
+
+
+            // original code
+            //byte[] position = new byte[12];
+            //byte[] last_position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
+            double[] RPM = new double[6];
+            double[] last_angle = new double[6];
+            double[] angle = new double[6];
+            last_angle = robot.ByteToAngle(last_position);
+            byte[] command;
+            string s;
+            int flag = 0;
+            byte[] buffer = new byte[10];
+            int angle3, angle5;
+            int last_angle3, last_angle5;
+            int delta;
+            double temp1 = 0;
+            byte[] temp = new byte[4];
+            temp[0] = last_position[4];
+            temp[1] = last_position[5];
+            temp[2] = 0x00;
+            temp[3] = 0x00;
+            last_angle3 = BitConverter.ToInt32(temp, 0);
+            temp[0] = last_position[8];
+            temp[1] = last_position[9];
+            last_angle5 = BitConverter.ToInt32(temp, 0);
+            int count1 = 0;
+            while (true)
+            {
+                count1++;
+                if ((s = sr.ReadLine()) != null)    //for that frame string
+                {
+                    if (s == "error")
+                        flag = 2;
+                    else
+                    {
+                        for (int i = 0; i < 6; i++)
+                        {
+                            if ((s = sr.ReadLine()) != null)
+                            {
+                                if (s == "error")
+                                {
+                                    flag = 2;
+                                    break;
+                                }
+                                position[2 * i] = BitConverter.GetBytes(Convert.ToInt32(s))[0];
+                            }
+                            else
+                            {
+                                flag = 1;
+                                break;
+                            }
+                            if ((s = sr.ReadLine()) != null)
+                            {
+                                if (s == "error")
+                                {
+                                    flag = 2;
+                                    break;
+                                }
+                                position[2 * i + 1] = BitConverter.GetBytes(Convert.ToInt32(s))[0];
+                            }
+                            else
+                            {
+                                flag = 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                    break;
+                if (flag == 1)
+                    break;
+                else if (flag == 2)
+                {
+                    flag = 0;
+                    continue;
+                }
+                else if (flag == 0)
+                {
+                    temp[0] = position[4];
+                    temp[1] = position[5];
+                    angle3 = BitConverter.ToInt32(temp, 0);
+                    if (angle3 >= last_angle3)
+                        temp1 = 12.124 * Math.Cos(Math.PI - angle3 * Math.PI / 2048) + 0.902;
+                    else
+                        temp1 = 21.834 * Math.Cos(Math.PI - angle3 * Math.PI / 2048) + 2.6965;
+                    last_angle3 = angle3;
+                    delta = (int)Math.Round(temp1);
+                    angle3 = angle3 - delta;
+                    position[4] = BitConverter.GetBytes(angle3)[0];
+                    position[5] = BitConverter.GetBytes(angle3)[1];
+
+                    temp[0] = position[8];
+                    temp[1] = position[9];
+                    angle5 = BitConverter.ToInt32(temp, 0);
+                    if (angle5 > last_angle5)
+                        temp1 = 2.7944 * Math.Cos(Math.PI - angle5 * Math.PI / 2048) + 2.1146;
+                    else if (angle5 < last_angle5)
+                        temp1 = 3.0771 * Math.Cos(Math.PI - angle5 * Math.PI / 2048) + 3.88;
+                    last_angle5 = angle5;
+                    delta = (int)Math.Round(temp1);
+                    angle5 = angle5 - delta;
+                    position[8] = BitConverter.GetBytes(angle5)[0];
+                    position[9] = BitConverter.GetBytes(angle5)[1];
+
+                    angle = robot.ByteToAngle(position);
+                    for (int j = 0; j < 6; j++)
+                    {
+                        RPM[j] = speed * Math.Abs(last_angle[j] - angle[j]);
+                        if (RPM[j] == 0)
+                            RPM[j] = RPM[j] + 1;
+                    }
+                    command = Arm.SyncMove(position, RPM);
+                    sp.Write(command, 0, command.Length);
+                    //Thread.Sleep(200);
+                    Thread.Sleep((int)(160 / speed));
+                    sp.ReadExisting();
+                    last_angle = angle;
+                }
+            }
+
+            sr.Close();
+        }
+
+        private void Play_Text_updown(string text_name, double speed)
+        {
+
+            StreamReader sr = File.OpenText(text_name);
+            //my code
+            sr.ReadLine();
+            byte[] position = new byte[12];
+            //byte[] last_position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
+            byte[] last_position = new byte[12];
+            for (int i = 0; i < 12; i++)
+            {
+                last_position[i] = BitConverter.GetBytes(Convert.ToInt32(sr.ReadLine()))[0];
+            }
             //initial with a higher position
             //byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x00, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 }; //initial position  with a higher position
+            //byte[] high_last_position = last_position;
+            //high_last_position[4] = 0x7B;
+            //high_last_position[5] = 0x06;
+            //Initial_Position(high_last_position);
+            //Thread.Sleep(1000);
+            //sp.ReadExisting();
+
             byte[] high_last_position = last_position;
             high_last_position[4] = 0x7B;
             high_last_position[5] = 0x06;
-            Initial_Position(high_last_position);
-            Thread.Sleep(100);
+            double[] hlpos_double = robot.ByteToAngle(high_last_position);
+            byte[] hlpos_command = Arm.MoveTo_MX(2, hlpos_double[2], 6);
+            sp.Write(hlpos_command, 0, hlpos_command.Length);
+            Thread.Sleep(1000);
+            sp.ReadExisting();
 
             Initial_Position(last_position);
             sr.Close();
@@ -509,6 +665,7 @@ namespace Callibot
             high_finish_position[4] = 0x7B;
             high_finish_position[5] = 0x06;
             Initial_Position(high_finish_position);
+            Thread.Sleep(100);
 
             sr.Close();
         }
@@ -549,6 +706,9 @@ namespace Callibot
             }
 
         }
+
+
+
 
         private void Initial_Position(byte[] position)
         {
@@ -1447,7 +1607,8 @@ namespace Callibot
             Thread.Sleep(300);
             sp.DiscardInBuffer();
             sp.DiscardOutBuffer();
-            Play_Text(filename.ToString() + ".txt", 0.5);
+            Play_Text_updown(filename.ToString() + ".txt", 0.5);
+            //Play_Text(filename.ToString() + ".txt", 0.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
             filename++;
@@ -1461,7 +1622,8 @@ namespace Callibot
 
             sp.DiscardInBuffer();
             sp.DiscardOutBuffer();
-            Play_Text(filename.ToString() + ".txt", 0.5);
+            //Play_Text(filename.ToString() + ".txt", 0.5);
+            Play_Text_updown(filename.ToString() + ".txt", 0.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
             filename++;
@@ -1479,7 +1641,8 @@ namespace Callibot
 
             sp.DiscardInBuffer();
             sp.DiscardOutBuffer();
-            Play_Text(filename.ToString() + ".txt", 0.5);
+            //Play_Text(filename.ToString() + ".txt", 0.5);
+            Play_Text_updown(filename.ToString() + ".txt", 0.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
             filename++;
