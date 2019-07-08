@@ -42,7 +42,7 @@ namespace Callibot
         int successNum;
         int failNum;
         int error_num = 0;
-        double horizontalInterval = 1480.00;
+        double horizontalInterval = 1548.00;
         public MainForm()
         {
             InitializeComponent();
@@ -504,6 +504,12 @@ namespace Callibot
                     last_angle = angle;
                 }
             }
+
+            byte[] high_finish_position = position;
+            high_finish_position[4] = 0x7B;
+            high_finish_position[5] = 0x06;
+            Initial_Position(high_finish_position);
+
             sr.Close();
         }
 
@@ -1317,27 +1323,27 @@ namespace Callibot
 
         private void button4_Click(object sender, EventArgs e)
         {
-            //向右移动1480个单位
+            //向右移动1548个单位
             byte[] command;
             //byte[] position = { 151, 8, 162, 8, 251, 5, 224, 3, 38, 4, 230, 13 };
             byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
 
             Initial_Position(position);
             Thread.Sleep(300);
-            command = StepMoter_Move(0x01, -1480, 2000);
+            command = StepMoter_Move(0x01, -1548, 2000);
             sp1.Write(command, 0, command.Length);
 
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
-            //向左移动1480个单位
+            //向左移动1548个单位
             byte[] command;
             //byte[] position = { 151, 8, 162, 8, 251, 5, 224, 3, 38, 4, 230, 13 };
             byte[] position = { 0xAC, 0x09, 0xE8, 0x0A, 0x7B, 0x06, 0x00, 0x08, 0x82, 0x09, 0x00, 0x08 };
             Initial_Position(position);
             Thread.Sleep(300);
-            command = StepMoter_Move(0x01, 1480, 2000);
+            command = StepMoter_Move(0x01, 1548, 2000);
             sp1.Write(command, 0, command.Length);
 
         }
@@ -1449,7 +1455,7 @@ namespace Callibot
             Play_Text("zb.txt", 1.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
-            command = StepMoter_Move(0x01, 1480, 2000);
+            command = StepMoter_Move(0x01, 1548, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
 
@@ -1460,14 +1466,14 @@ namespace Callibot
             Thread.Sleep(300);
             filename++;
 
-            command = StepMoter_Move(0x01, -1480, 2000);
+            command = StepMoter_Move(0x01, -1548, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
             Play_Text("zb.txt", 1.5);
             Initial_Position(Initpos);
             Thread.Sleep(300);
 
-            command = StepMoter_Move(0x01, 2960, 2000);
+            command = StepMoter_Move(0x01, 3096, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
 
@@ -1477,7 +1483,7 @@ namespace Callibot
             Initial_Position(Initpos);
             Thread.Sleep(300);
             filename++;
-            command = StepMoter_Move(0x01, -2960, 2000);
+            command = StepMoter_Move(0x01, -3096, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
             Play_Text("piekai.txt", 1.0);
