@@ -199,6 +199,9 @@ namespace Callibot
 
         public void ErrorCorrect()
         {
+            ReadFile();
+            CreateZAxisText();
+
             StreamWriter cofile = File.CreateText("correct\\"+filename + ".txt");
             Boolean indicator = true;
             for (int i = 0; i < zList.Length; i++)

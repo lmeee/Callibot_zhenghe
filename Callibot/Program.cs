@@ -16,7 +16,7 @@ namespace Callibot
             Application.Run(new MainForm());
 
             //int j = 0;
-            //for (int i = 220; i <= 260; i++)
+            //for (int i = 326; i <= 557; i++)
             //{
             //    DataCut wash = new DataCut(Convert.ToString(i));
             //    wash.Washmode();

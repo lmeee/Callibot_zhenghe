@@ -1646,7 +1646,9 @@ namespace Callibot
             Initial_Position(Initpos);
             Thread.Sleep(300);
             filename++;
-            command = StepMoter_Move(0x01, -3096, 2000);
+            //This number was set to -3094 but not 3096. In practice, 
+            //the adjustment was measured to be necessary for trail movement.
+            command = StepMoter_Move(0x01, -3094, 2000);
             sp1.Write(command, 0, command.Length);
             Thread.Sleep(1500);
             Play_Text("piekai.txt", 1.0);
